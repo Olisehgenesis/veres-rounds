@@ -6,6 +6,8 @@
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1",
     "generate-wallets": "ts-node scripts/generate-wallets.ts",
+    "deploy-vcUSD": "ts-node scripts/deploy-verescUSD.ts",
+    "airdrop-vcUSD": "ts-node scripts/give-usdc.ts",
     "compile": "hardhat compile",
     "deploy:testnet": "hardhat run scripts/deploy.ts --network celoAlfajores",
     "deploy:mainnet": "hardhat run scripts/deploy.ts --network celoMainnet",
@@ -40,6 +42,7 @@
   },
   "dependencies": {
     "@openzeppelin/contracts": "^5.2.0",
+    "dotenv": "^16.4.7",
     "fs": "0.0.1-security",
     "openzeppelin": "^1.0.0"
   }

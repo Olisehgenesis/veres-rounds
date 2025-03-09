@@ -11,6 +11,9 @@ importers:
       '@openzeppelin/contracts':
         specifier: ^5.2.0
         version: 5.2.0
+      fs:
+        specifier: 0.0.1-security
+        version: 0.0.1-security
       openzeppelin:
         specifier: ^1.0.0
         version: 1.0.0
@@ -43,7 +46,7 @@ importers:
         specifier: '>=9.1.0'
         version: 10.0.10
       '@types/node':
-        specifier: '>=18.0.0'
+        specifier: ^22.13.9
         version: 22.13.9
       chai:
         specifier: ^4.2.0
@@ -58,13 +61,13 @@ importers:
         specifier: ^0.8.0
         version: 0.8.14(hardhat@2.22.19(ts-node@10.9.2(@types/node@22.13.9)(typescript@5.0.4))(typescript@5.0.4))
       ts-node:
-        specifier: '>=8.0.0'
+        specifier: ^10.9.2
         version: 10.9.2(@types/node@22.13.9)(typescript@5.0.4)
       typescript:
         specifier: ~5.0.4
         version: 5.0.4
       viem:
-        specifier: ^2.7.6
+        specifier: ^2.23.7
         version: 2.23.7(typescript@5.0.4)
 
 packages:
@@ -1072,6 +1075,9 @@ packages:
 
   fs.realpath@1.0.0:
     resolution: {integrity: sha512-OO0pH2lK6a0hZnAdau5ItzHPI6pUlvI7jMVnxUQRtw4owF2wk8lOSabtGDCTP4Ggrg2MbGnWO9X8K1t4+fGMDw==}
+
+  fs@0.0.1-security:
+    resolution: {integrity: sha512-3XY9e1pP0CVEUCdj5BmfIZxRBTSDycnbqhIOGec9QYtmVH2fbLpj86CFWkrNOkt/Fvty4KZG5lTglL9j/gJ87w==}
 
   fsevents@2.3.3:
     resolution: {integrity: sha512-5xoDfX+fL7faATnagmWPpbFtwh/R77WmMMqqHGS65C3vvB0YHrgF+B1YmZ3441tMj5n63k0212XNoJwzlhffQw==}
@@ -3347,6 +3353,8 @@ snapshots:
   fs-readdir-recursive@1.1.0: {}
 
   fs.realpath@1.0.0: {}
+
+  fs@0.0.1-security: {}
 
   fsevents@2.3.3:
     optional: true

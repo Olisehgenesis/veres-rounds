@@ -1,7 +1,7 @@
 // scripts/deploy-direct.ts
 import { createPublicClient, createWalletClient, http } from 'viem';
 import { privateKeyToAccount } from 'viem/accounts';
-import { baseSepolia } from 'viem/chains';
+import { celoAlfajores } from 'viem/chains';
 import * as dotenv from 'dotenv';
 import * as fs from 'fs';
 
@@ -23,13 +23,13 @@ async function main() {
   
   // Create clients
   const publicClient = createPublicClient({
-    chain: baseSepolia,
+    chain: celoAlfajores,
     transport: http()
   });
   
   const walletClient = createWalletClient({
     account,
-    chain: baseSepolia,
+    chain: celoAlfajores,
     transport: http()
   });
   

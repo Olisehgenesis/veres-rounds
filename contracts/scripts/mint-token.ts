@@ -1,8 +1,4 @@
-
-
-
-
-// scripts/give-usdc.ts
+// scripts/mint-vcusd-to-wallets.ts
 import { createPublicClient, createWalletClient, http, formatUnits } from 'viem';
 import { privateKeyToAccount } from 'viem/accounts';
 import { celoAlfajores } from 'viem/chains';
@@ -11,10 +7,10 @@ import * as dotenv from 'dotenv';
 // Load environment variables
 dotenv.config();
 
-// VeresCUSD token address on Celo Alfajores
-const VCUSD_TOKEN_ADDRESS = '0x4d27a8Afd4B0f08B1c436E67F939cAFa4FA988b3';
+// VeresCUSD token address on celo alfajores
+const VCUSD_TOKEN_ADDRESS = '0xbDF781f1FED2382Be8D28969363554d18389ECF0';
 
-// Development wallet addresses to distribute tokens to
+// Development wallet addresses to mint tokens to
 const DEV_WALLETS = [
   '0xd7b8CD75Dc08b3a7f14d794F6BB66B3ECDcCb0b9',
   '0x872EcD4104C8Ddf917F44398d700a55700bfb1ea',
@@ -23,8 +19,9 @@ const DEV_WALLETS = [
   '0x8De1D45462570Fad5B11b341B81450dA0BCD7c26'
 ];
 
-// Token ABI (proper format for Viem)
+// Full token ABI including mint function
 const TOKEN_ABI = [
+  // Read functions
   {
     name: 'balanceOf',
     type: 'function',
@@ -46,16 +43,18 @@ const TOKEN_ABI = [
     inputs: [],
     outputs: [{ name: '', type: 'uint8' }]
   },
+  // Write functions
   {
-    name: 'transfer',
+    name: 'mint',
     type: 'function',
     stateMutability: 'nonpayable',
     inputs: [
       { name: 'to', type: 'address' },
       { name: 'amount', type: 'uint256' }
     ],
-    outputs: [{ name: '', type: 'bool' }]
+    outputs: []
   },
+  // Error
   {
     type: 'error',
     name: 'ERC20InsufficientBalance',
@@ -107,10 +106,10 @@ async function main() {
     transport: http()
   });
 
-  console.log(`Distributing random tokens from ${account.address}`);
+  console.log(`Minting vCUSD tokens to development wallets as owner: ${account.address}`);
 
   try {
-    // Check token details and sender balance
+    // Check symbol and decimals to verify connection
     const tokenSymbol = await publicClient.readContract({
       address: VCUSD_TOKEN_ADDRESS as `0x${string}`,
       abi: TOKEN_ABI,
@@ -123,37 +122,40 @@ async function main() {
       functionName: 'decimals'
     }) as number;
 
-    console.log(`Connected to ${tokenSymbol} token with ${tokenDecimals} decimals`);
-
-    const senderBalance = await publicClient.readContract({
-      address: VCUSD_TOKEN_ADDRESS as `0x${string}`,
-      abi: TOKEN_ABI,
-      functionName: 'balanceOf',
-      args: [account.address]
-    }) as bigint;
-
-    console.log(`Your ${tokenSymbol} balance: ${formatUnits(senderBalance, tokenDecimals)}`);
+    console.log(`Connected to ${tokenSymbol} token at ${VCUSD_TOKEN_ADDRESS}`);
+    console.log(`Token has ${tokenDecimals} decimals`);
     
-    // Approximately calculate max needed (200 * number of wallets)
-    const estimatedMaxNeeded = parseAmount(200, tokenDecimals) * BigInt(DEV_WALLETS.length);
+    // Mint tokens to each wallet
+    console.log('\nMinting random amounts between 100-200 tokens to each development wallet...');
+    let totalMinted = BigInt(0);
     
-    // Check if we have enough balance
-    if (senderBalance < estimatedMaxNeeded) {
-      console.error(`Potentially insufficient balance. You have ${formatUnits(senderBalance, tokenDecimals)} but might need up to ${formatUnits(estimatedMaxNeeded, tokenDecimals)}`);
-      console.log('Continuing anyway as we\'re sending random amounts...');
+    // Also mint a large amount (1M) to the owner if requested
+    const shouldMintToOwner = false; // Set to true if you want to mint to owner
+    if (shouldMintToOwner) {
+      const ownerAmount = parseAmount(1000000, tokenDecimals); // 1 million tokens
+      
+      console.log(`\nMinting ${formatUnits(ownerAmount, tokenDecimals)} ${tokenSymbol} to owner ${account.address}...`);
+      
+      const ownerMintTx = await walletClient.writeContract({
+        address: VCUSD_TOKEN_ADDRESS as `0x${string}`,
+        abi: TOKEN_ABI,
+        functionName: 'mint',
+        args: [account.address, ownerAmount]
+      });
+      
+      await publicClient.waitForTransactionReceipt({ hash: ownerMintTx });
+      console.log(`✓ Minted ${formatUnits(ownerAmount, tokenDecimals)} ${tokenSymbol} to owner successfully.`);
+      
+      totalMinted += ownerAmount;
     }
-
-    // Distribute tokens to each wallet
-    console.log(`\nSending random amounts between 100-200 ${tokenSymbol} to each development wallet...`);
-    let totalSent = BigInt(0);
 
     for (let i = 0; i < DEV_WALLETS.length; i++) {
       const wallet = DEV_WALLETS[i] as `0x${string}`;
       const amount = getRandomAmount(tokenDecimals);
-      totalSent += amount;
+      totalMinted += amount;
       
       try {
-        console.log(`\nTransferring to wallet ${i+1}: ${wallet}`);
+        console.log(`\nMinting to wallet ${i+1}: ${wallet}`);
         console.log(`Amount: ${formatUnits(amount, tokenDecimals)} ${tokenSymbol}`);
 
         // Check existing balance
@@ -166,18 +168,18 @@ async function main() {
 
         console.log(`Current balance: ${formatUnits(existingBalance, tokenDecimals)} ${tokenSymbol}`);
 
-        // Send tokens
-        const transferHash = await walletClient.writeContract({
+        // Mint tokens
+        const mintTx = await walletClient.writeContract({
           address: VCUSD_TOKEN_ADDRESS as `0x${string}`,
           abi: TOKEN_ABI,
-          functionName: 'transfer',
+          functionName: 'mint',
           args: [wallet, amount]
         });
 
-        console.log(`Transaction sent. Hash: ${transferHash}`);
+        console.log(`Transaction sent. Hash: ${mintTx}`);
         
         // Wait for transaction to complete
-        const receipt = await publicClient.waitForTransactionReceipt({ hash: transferHash });
+        const receipt = await publicClient.waitForTransactionReceipt({ hash: mintTx });
         console.log(`Transaction confirmed in block ${receipt.blockNumber}`);
 
         // Check new balance
@@ -191,21 +193,13 @@ async function main() {
         console.log(`New balance: ${formatUnits(newBalance, tokenDecimals)} ${tokenSymbol}`);
 
       } catch (error) {
-        console.error(`Error sending tokens to ${wallet}:`, error);
+        console.error(`Error minting tokens to ${wallet}:`, error);
       }
     }
 
-    // Check remaining balance of sender
-    const remainingBalance = await publicClient.readContract({
-      address: VCUSD_TOKEN_ADDRESS as `0x${string}`,
-      abi: TOKEN_ABI,
-      functionName: 'balanceOf',
-      args: [account.address]
-    }) as bigint;
+    console.log(`\nMinting complete!`);
+    console.log(`Total minted: ${formatUnits(totalMinted, tokenDecimals)} ${tokenSymbol}`);
 
-    console.log(`\nDistribution complete!`);
-    console.log(`Total sent: ${formatUnits(totalSent, tokenDecimals)} ${tokenSymbol}`);
-    console.log(`Your remaining ${tokenSymbol} balance: ${formatUnits(remainingBalance, tokenDecimals)}`);
   } catch (error) {
     console.error("Error:", error);
   }

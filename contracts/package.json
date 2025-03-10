@@ -6,6 +6,7 @@
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1",
     "generate-wallets": "ts-node scripts/generate-wallets.ts",
+    "mint-vusd": "ts-node scripts/mint-token.ts",
     "deploy-vcUSD": "ts-node scripts/deploy-verescUSD.ts",
     "airdrop-vcUSD": "ts-node scripts/give-usdc.ts",
     "compile": "hardhat compile",
